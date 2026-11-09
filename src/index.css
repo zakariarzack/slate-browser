@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+html, body, #root {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* macOS Drag Region Utilities */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+@layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  
+  /* Custom scrollbar for sidebar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+@keyframes progress-glide {
+  0% { transform: translateX(-100%); width: 25%; }
+  50% { width: 55%; }
+  100% { transform: translateX(400%); width: 25%; }
+}
+
+.loading-progress-bar {
+  animation: progress-glide 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
