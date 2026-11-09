@@ -1359,7 +1359,7 @@ export function App() {
             setIsUpdateModalOpen(true);
           }
         } else if (isManual) {
-          setTidyNotification(`Aura v${res.currentVersion} is currently the latest version.`);
+          setTidyNotification(`Slate v${res.currentVersion} is currently the latest version.`);
           setTimeout(() => setTidyNotification(null), 4000);
         }
       }
@@ -1582,9 +1582,9 @@ export function App() {
     localStorage.setItem('aura_search_engine', engine);
   };
 
-  // Little Aura (Floating Transient Window) State
+  // Little Slate (Floating Transient Window) State
   const [littleArcUrl, setLittleArcUrl] = useState<string | null>(null);
-  const [littleArcTitle, setLittleArcTitle] = useState('Little Aura');
+  const [littleArcTitle, setLittleArcTitle] = useState('Little Slate');
   const [isLittleArcInputOpen, setIsLittleArcInputOpen] = useState(false);
   const [littleArcInputVal, setLittleArcInputVal] = useState('');
   const littleArcWebviewRef = useRef<any>(null);
@@ -3965,7 +3965,7 @@ export function App() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                 </span>
                 <span className="font-semibold text-white truncate text-[11px]">
-                  Aura v{updateInfo.latestVersion}
+                  Slate v{updateInfo.latestVersion}
                 </span>
               </div>
               <button
@@ -4201,8 +4201,8 @@ export function App() {
 
               {/* Option B: Inline Editable Omnibar Pill */}
               {(() => {
-                let domain = 'Aura';
-                const isNewTab = activeTab?.url === 'aura://newtab' || activeTab?.url === 'about:blank' || !activeTab?.url;
+                let domain = 'Slate';
+                const isNewTab = activeTab?.url === 'slate://newtab' || activeTab?.url === 'aura://newtab' || activeTab?.url === 'about:blank' || !activeTab?.url;
                 try {
                   if (activeTab?.url) {
                     if (isNewTab) {
@@ -4213,7 +4213,7 @@ export function App() {
                     }
                   }
                 } catch (e) {
-                  domain = isNewTab ? 'Search Google or type a URL' : (activeTab?.url || 'Aura');
+                  domain = isNewTab ? 'Search Google or type a URL' : (activeTab?.url || 'Slate');
                 }
 
                 // Inactive top bar pill (Normal State)
@@ -6108,7 +6108,7 @@ export function App() {
                     <p className="text-xs text-zinc-500 mt-1 max-w-sm">
                       {query
                         ? 'Try typing a different keyword or URL'
-                        : 'Websites you visit in Aura will appear here just like Chrome.'}
+                        : 'Websites you visit in Slate will appear here just like Chrome.'}
                     </p>
                   </div>
                 ) : (
@@ -6483,7 +6483,7 @@ export function App() {
             <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
               <div className="flex items-center gap-2">
                 <Maximize2 className="w-4 h-4 text-sky-400" />
-                <h3 className="font-semibold text-sm text-white">Little Aura — Quick Peek</h3>
+                <h3 className="font-semibold text-sm text-white">Little Slate — Quick Peek</h3>
               </div>
               <kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-zinc-400">Esc to close</kbd>
             </div>
@@ -6577,7 +6577,7 @@ export function App() {
                     Default Search Engine
                   </label>
                   <p className="text-[11px] text-zinc-400 mb-3">
-                    Choose the search engine used for searches from the URL bar, new tabs, and Little Aura.
+                    Choose the search engine used for searches from the URL bar, new tabs, and Little Slate.
                   </p>
 
                   <div className="grid grid-cols-1 gap-2">
@@ -6615,7 +6615,7 @@ export function App() {
                   <div className="mt-5 pt-4 border-t border-white/5 space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-xs font-semibold text-white">Aura Browser Version</h4>
+                        <h4 className="text-xs font-semibold text-white">Slate Browser Version</h4>
                         <p className="text-[11px] text-zinc-400">
                           Current installed version: v{updateInfo?.currentVersion || '1.0.0'}
                         </p>
@@ -6639,7 +6639,7 @@ export function App() {
                           </span>
                           <div>
                             <p className="text-xs font-semibold text-white">
-                              Aura v{updateInfo.latestVersion} is available!
+                              Slate v{updateInfo.latestVersion} is available!
                             </p>
                             <p className="text-[11px] text-zinc-300">New features and improvements ready</p>
                           </div>
@@ -6658,7 +6658,7 @@ export function App() {
                     ) : (
                       <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 text-zinc-400 text-[11px]">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span>You are on the latest version of Aura Browser.</span>
+                        <span>You are on the latest version of Slate Browser.</span>
                       </div>
                     )}
                   </div>
@@ -7257,7 +7257,7 @@ export function App() {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-white">
-                    {updateInfo.hasUpdate ? 'Update Available' : 'Aura Browser'}
+                    {updateInfo.hasUpdate ? 'Update Available' : 'Slate Browser'}
                   </h3>
                   <p className="text-xs text-zinc-400">
                     {updateInfo.hasUpdate

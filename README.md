@@ -1,5 +1,5 @@
-# Aura Browser 🌌
-> **The fluid, privacy-first workspace browser for power users.** Inspired by Arc’s spatial organization, built without corporate AI lock-in.
+# Slate Browser 🪨
+> **The fluid, privacy-first workspace browser for power users.** Inspired by Arc’s spatial organization and the Sheikah Slate's modular multi-tool design, built without corporate AI lock-in.
 
 [![Platform](https://img.shields.io/badge/Platform-macOS%20(Apple%20Silicon)-black?style=flat&logo=apple)](https://github.com)
 [![Engine](https://img.shields.io/badge/Engine-Chromium%20%7C%20Electron-2b2d42?style=flat&logo=electron)](https://electronjs.org)
@@ -10,9 +10,9 @@
 
 ## ✨ Overview
 
-**Aura** is a next-generation workspace browser crafted for knowledge workers, developers, and creators. It combines the spatial elegance of vertical tabs, fluid glass sidebars, and isolated multi-profile spaces with **100% user control, privacy, and full Chrome extension support**.
+**Slate** is a next-generation workspace browser crafted for knowledge workers, developers, and creators. It combines the spatial elegance of vertical tabs, fluid glass sidebars, and isolated multi-profile spaces with **100% user control, privacy, and full Chrome extension support**.
 
-Unlike modern browsers that force proprietary AI search engines or lock you into cloud subscriptions, Aura keeps AI completely **opt-in, transparent, and local-first** (BYOK & Ollama).
+Unlike modern browsers that force proprietary AI search engines or lock you into cloud subscriptions, Slate keeps AI completely **opt-in, transparent, and local-first** (BYOK & Ollama).
 
 ---
 
@@ -40,7 +40,7 @@ Unlike modern browsers that force proprietary AI search engines or lock you into
 ### ⚡ Power Navigation & Split View
 * **Floating Command Palette (`⌘T` / `⌘L`)**: Instant fuzzy search across open tabs, history, bookmarks, and search engines (Google, DuckDuckGo, Kagi, Ecosia).
 * **Dual-Pane Split View**: Tile tabs side-by-side to compare code, review docs, or multi-task without window management clutter.
-* **Little Arc / Peek**: Open external links in lightweight floating preview windows before adding them to your workspace.
+* **Little Slate / Peek**: Open external links in lightweight floating preview windows before adding them to your workspace.
 * **Adaptive Toolbar**: Minimalist top navigation that dynamically matches the active page's background and theme color.
 
 ### 🛡️ Private & Opt-in AI
@@ -87,8 +87,8 @@ Unlike modern browsers that force proprietary AI search engines or lock you into
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/aura-browser.git
-cd aura-browser
+git clone https://github.com/zakariarzack/slate-browser.git
+cd slate-browser
 
 # Install dependencies
 npm install
@@ -100,10 +100,10 @@ npm run dev
 ### Packaging for macOS
 
 ```bash
-# Fast local build & deploy to /Applications/Aura.app
+# Fast local build & deploy to /Applications/Slate.app
 npm run deploy:fast
 
-# Build distributable DMG (release/Aura-1.0.0-arm64.dmg)
+# Build distributable DMG (release/Slate-1.0.0-arm64.dmg)
 npm run dist:mac
 ```
 

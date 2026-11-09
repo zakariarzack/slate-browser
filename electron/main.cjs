@@ -21,7 +21,7 @@ const { installChromeWebStore } = require('electron-chrome-web-store');
 const { ElectronChromeExtensions } = require('electron-chrome-extensions');
 
 // Set application name for macOS and Chrome Web Store branding
-app.name = 'Aura';
+app.name = 'Slate';
 
 // Standard Chrome Desktop User-Agent string (stripping Electron tokens globally)
 const NATIVE_CHROME_UA =
@@ -202,7 +202,7 @@ app.on('web-contents-created', (event, contents) => {
         },
       });
       menuItems.push({
-        label: 'Open in Little Aura',
+        label: 'Open in Little Slate',
         click: () => {
           if (win) win.webContents.send('open-in-little-arc', params.linkURL);
         },
@@ -1491,9 +1491,9 @@ app.whenReady().then(() => {
   ipcMain.handle('check-app-update', async () => {
     const currentVersion = app.getVersion();
     try {
-      const response = await fetch('https://api.github.com/repos/zakariarzack/aura-browser/releases/latest', {
+      const response = await fetch('https://api.github.com/repos/zakariarzack/slate-browser/releases/latest', {
         headers: {
-          'User-Agent': 'Aura-Browser-Update-Checker',
+          'User-Agent': 'Slate-Browser-Update-Checker',
           'Accept': 'application/vnd.github.v3+json'
         }
       });
@@ -1533,7 +1533,7 @@ app.whenReady().then(() => {
         ? release.assets.find(a => a.name && a.name.toLowerCase().endsWith('.dmg'))
         : null;
 
-      const downloadUrl = dmgAsset?.browser_download_url || release.html_url || 'https://github.com/zakariarzack/aura-browser/releases';
+      const downloadUrl = dmgAsset?.browser_download_url || release.html_url || 'https://github.com/zakariarzack/slate-browser/releases';
 
       return {
         hasUpdate: isNewer,

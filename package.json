@@ -1,7 +1,7 @@
 {
-  "name": "aura",
+  "name": "slate",
   "version": "1.0.0",
-  "description": "",
+  "description": "Slate Browser — The fluid, privacy-first workspace browser for macOS",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "node scripts/dev.mjs",
@@ -10,12 +10,12 @@
     "dev:electron": "electron .",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy:fast": "vite build && electron-builder --mac dir --publish never && pkill -f \"Aura.app/Contents/MacOS/Aura\" || true && rm -rf /Applications/Aura.app && cp -R release/mac-arm64/Aura.app /Applications/ && open /Applications/Aura.app",
+    "deploy:fast": "vite build && electron-builder --mac dir --publish never && pkill -f \"Slate.app/Contents/MacOS/Slate\" || true && rm -rf /Applications/Slate.app && cp -R release/mac-arm64/Slate.app /Applications/ && open /Applications/Slate.app",
     "dist:mac": "vite build && electron-builder --mac dmg --publish never"
   },
   "build": {
-    "appId": "com.aura.browser",
-    "productName": "Aura",
+    "appId": "com.slate.browser",
+    "productName": "Slate",
     "directories": {
       "output": "release"
     },
@@ -79,5 +79,5 @@
     "react-dom": "^19.3.1",
     "tailwindcss": "^4.3.3"
   },
-  "productName": "Aura"
+  "productName": "Slate"
 }

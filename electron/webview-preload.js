@@ -1,5 +1,5 @@
-// Webview preload script for Aura Browser
-// Bundle combining electron-chrome-web-store API bridge and Aura UI enhancements
+// Webview preload script for Slate Browser
+// Bundle combining electron-chrome-web-store API bridge and Slate UI enhancements
 
 // 0. Clean Chromium environment (strictly avoiding mock window.chrome objects that Google BotGuard detects)
 try {
@@ -17,10 +17,10 @@ try {
   }
 } catch (e) {}
 
-// 2. Extra Aura UI enhancements
+// 2. Extra Slate UI enhancements
 const { ipcRenderer } = require('electron');
 
-// Intercept clicks on links for Little Aura (Option/Alt+Click) and new tab navigation (Cmd+Click, Cmd+Shift+Click, Middle-click)
+// Intercept clicks on links for Little Slate (Option/Alt+Click) and new tab navigation (Cmd+Click, Cmd+Shift+Click, Middle-click)
 function setupLinkShortcuts() {
   const handleLinkClick = (e) => {
     const isAltClick = e.altKey && !e.metaKey && !e.ctrlKey;
@@ -28,7 +28,7 @@ function setupLinkShortcuts() {
     const isCmdClick = (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey;
     const isMiddleClick = e.button === 1;
 
-    // 1. Option/Alt+Click -> Open in Little Aura Peek HUD
+    // 1. Option/Alt+Click -> Open in Little Slate Peek HUD
     if (isAltClick) {
       const link = e.target && e.target.closest('a[href]');
       if (link && link.href && !link.href.startsWith('javascript:')) {
@@ -97,12 +97,12 @@ if (
         }
       });
 
-      // Ensure the "Add to Chrome" / "Add to Aura" button is enabled
+      // Ensure the "Add to Chrome" / "Add to Slate" button is enabled
       const buttons = document.querySelectorAll('button, [role="button"]');
       buttons.forEach((btn) => {
         const text = btn.innerText || '';
         if (text.includes('Add to Chrome')) {
-          btn.innerText = text.replace('Add to Chrome', 'Add to Aura');
+          btn.innerText = text.replace('Add to Chrome', 'Add to Slate');
         }
         if (btn.disabled && (btn.getAttribute('aria-describedby') === 'i3' || text.includes('Add'))) {
           btn.disabled = false;
@@ -111,7 +111,7 @@ if (
       });
     }
 
-    // Intercept clicks on "Add to Aura" / "Add to Chrome" buttons
+    // Intercept clicks on "Add to Slate" / "Add to Chrome" buttons
     document.addEventListener(
       'click',
       async (e) => {
@@ -123,7 +123,7 @@ if (
 
         const text = (button.innerText || '').trim();
         if (
-          text.includes('Add to Aura') ||
+          text.includes('Add to Slate') ||
           text.includes('Add to Chrome') ||
           text.includes('Add extension')
         ) {
@@ -136,17 +136,17 @@ if (
 
           const extId = match[1].toLowerCase();
           const origText = button.innerText;
-          button.innerText = 'Installing to Aura...';
+          button.innerText = 'Installing to Slate...';
           button.disabled = true;
 
           try {
             const res = await ipcRenderer.invoke('install-extension', extId);
             if (res && res.success) {
-              button.innerText = '✓ Added to Aura';
+              button.innerText = '✓ Added to Slate';
               button.style.backgroundColor = '#10b981';
               button.style.color = '#ffffff';
             } else {
-              button.innerText = '✓ Added to Aura';
+              button.innerText = '✓ Added to Slate';
             }
           } catch (err) {
             console.error('Failed to install extension:', err);
