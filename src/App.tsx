@@ -105,6 +105,8 @@ import { getBundledIcon } from './bundledIcons';
 import { tidyTabTitle, clusterTabsLocally, clusterTabsWithGemini, TidyResult } from './utils/tidyTabsEngine';
 
 const GEMINI_DEFAULT_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const DESKTOP_CHROME_UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36';
 
 // Smart URL title heuristic to immediately display readable page/video/query titles
 function formatSmartUrlTitle(rawUrl: string): string {
@@ -5267,6 +5269,7 @@ export function App() {
                       className="w-full h-full border-none"
                       partition={`persist:${tab.spaceId || 'default'}`}
                       preload={webviewPreloadPath || undefined}
+                      useragent={DESKTOP_CHROME_UA}
                       {...({ allowpopups: 'true', webpreferences: 'nativeWindowOpen=yes,contextIsolation=yes,backgroundThrottling=no' } as any)}
                     />
                   </>
@@ -5309,6 +5312,7 @@ export function App() {
                   }`}
                   partition={`persist:${secondaryTab.spaceId || 'default'}`}
                   preload={webviewPreloadPath || undefined}
+                  useragent={DESKTOP_CHROME_UA}
                   {...({ allowpopups: 'true', webpreferences: 'nativeWindowOpen=yes,contextIsolation=yes' } as any)}
                 />
               </div>
@@ -6795,6 +6799,7 @@ export function App() {
                 src={littleArcUrl}
                 className="w-full h-full border-none"
                 preload={webviewPreloadPath || undefined}
+                useragent={DESKTOP_CHROME_UA}
                 {...({ allowpopups: 'true' } as any)}
               />
             </div>

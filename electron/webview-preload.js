@@ -83,9 +83,20 @@ if (
     function cleanBanners() {
       // Remove any warning banner ("Item currently unavailable", "Switch to Chrome", etc.)
       const allDivs = document.querySelectorAll(
-        'div, section, aside, [role="region"], [role="banner"], [role="alert"]'
+        'div, section, aside, [role="region"], [role="alert"]'
       );
       allDivs.forEach((el) => {
+        // Protect header, search bar, navigation inputs, and buttons from ever being hidden
+        if (
+          el.tagName === 'HEADER' ||
+          el.getAttribute('role') === 'banner' ||
+          el.getAttribute('role') === 'search' ||
+          el.id === 'kO001e' ||
+          el.querySelector('[role="search"], input, header')
+        ) {
+          return;
+        }
+
         const text = el.innerText || '';
         if (
           (text.includes('Item currently unavailable') ||

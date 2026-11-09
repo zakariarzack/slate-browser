@@ -11,6 +11,11 @@ process.on('uncaughtException', (err) => {
     console.error('Unhandled exception:', err);
   } catch (e) {}
 });
+process.on('unhandledRejection', (reason) => {
+  try {
+    console.warn('⚠️ [UNHANDLED REJECTION IGNORED]:', reason);
+  } catch (e) {}
+});
 
 const { app, BrowserWindow, Menu, clipboard, ipcMain, session, dialog, shell } = require('electron');
 const path = require('path');
@@ -561,13 +566,13 @@ app.whenReady().then(() => {
         (details, callback) => {
           try {
             const url = details.url || "";
-            const isGoogle =
-              url.includes("google.com") ||
-              url.includes("google.") ||
-              url.includes("googleusercontent.com") ||
-              url.includes("googleapis.com");
+            // ONLY Google Accounts login flow needs the Firefox UA BotGuard bypass
+            // Chrome Web Store (chromewebstore.google.com), YouTube, Google Search, Docs, Drive MUST use genuine Chrome UA!
+            const isGoogleAuth =
+              url.includes("accounts.google.com") ||
+              url.includes("accounts.youtube.com");
 
-            if (isGoogle) {
+            if (isGoogleAuth) {
               details.requestHeaders["User-Agent"] = FIREFOX_UA;
               delete details.requestHeaders["Sec-CH-UA"];
               delete details.requestHeaders["sec-ch-ua"];
@@ -576,7 +581,7 @@ app.whenReady().then(() => {
               delete details.requestHeaders["Sec-CH-UA-Platform"];
               delete details.requestHeaders["sec-ch-ua-platform"];
             } else {
-              // Genuine Chrome UA for Microsoft and Enterprise SSO
+              // Genuine Chrome UA for Chrome Web Store, Google, Microsoft, and all standard web
               details.requestHeaders["User-Agent"] = CHROME_UA;
               details.requestHeaders["Sec-CH-UA"] =
                 '"Not A(Brand";v="8", "Chromium";v="133", "Google Chrome";v="133"';
@@ -1245,6 +1250,24 @@ app.whenReady().then(() => {
       fs.mkdirSync(extensionsDir, { recursive: true });
     } catch (e) {}
   }
+  // Auto-migrate extensions from legacy Aura if present
+  try {
+    const legacyAuraDirs = [
+      path.join(app.getPath('appData'), 'Aura', 'extensions'),
+      path.join(app.getPath('appData'), 'Aura', 'Extensions'),
+    ];
+    for (const legDir of legacyAuraDirs) {
+      if (fs.existsSync(legDir)) {
+        const entries = fs.readdirSync(legDir);
+        for (const entry of entries) {
+          const dest = path.join(extensionsDir, entry);
+          if (!fs.existsSync(dest)) {
+            fs.cpSync(path.join(legDir, entry), dest, { recursive: true });
+          }
+        }
+      }
+    }
+  } catch (e) {}
 
   // Helper to extract CRX (CRX3 or ZIP) to target folder
   function extractCrxToDir(crxPath, outDir) {
@@ -1461,6 +1484,16 @@ app.whenReady().then(() => {
         const extInstance = await ensureSessionExtensions(guestWebContents.session);
         if (extInstance && !guestWebContents.isDestroyed() && !win.isDestroyed()) {
           extInstance.addTab(guestWebContents, win);
+          if (!guestWebContents.__hasExtensionCleanup) {
+            guestWebContents.__hasExtensionCleanup = true;
+            guestWebContents.once('destroyed', () => {
+              try {
+                if (extInstance && typeof extInstance.removeTab === 'function') {
+                  extInstance.removeTab(guestWebContents, win);
+                }
+              } catch (e) {}
+            });
+          }
         }
       } catch (e) {}
     });
@@ -1992,11 +2025,22 @@ app.whenReady().then(() => {
     const extInstance = await ensureSessionExtensions(targetSession);
     const targetWin = BrowserWindow.getFocusedWindow() || mainWindow;
 
-    if (extInstance && targetWin) {
+    if (extInstance && targetWin && !guestContents.isDestroyed() && !targetWin.isDestroyed()) {
       try {
         extInstance.addTab(guestContents, targetWin);
         if (isActive) {
           extInstance.selectTab(guestContents);
+        }
+
+        if (!guestContents.__hasExtensionCleanup) {
+          guestContents.__hasExtensionCleanup = true;
+          guestContents.once('destroyed', () => {
+            try {
+              if (extInstance && typeof extInstance.removeTab === 'function') {
+                extInstance.removeTab(guestContents, targetWin);
+              }
+            } catch (e) {}
+          });
         }
       } catch (e) {
         // Tab might already be registered in this session
