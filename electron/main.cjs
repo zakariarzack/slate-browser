@@ -1475,6 +1475,85 @@ app.whenReady().then(() => {
     return pathToFileURL(path.join(__dirname, 'webview-preload.js')).href;
   });
 
+  // App Version & Update Checker (GitHub Releases)
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+  });
+
+  ipcMain.handle('open-external-url', async (event, targetUrl) => {
+    if (targetUrl && (targetUrl.startsWith('https://') || targetUrl.startsWith('http://'))) {
+      shell.openExternal(targetUrl);
+      return true;
+    }
+    return false;
+  });
+
+  ipcMain.handle('check-app-update', async () => {
+    const currentVersion = app.getVersion();
+    try {
+      const response = await fetch('https://api.github.com/repos/zakariarzack/aura-browser/releases/latest', {
+        headers: {
+          'User-Agent': 'Aura-Browser-Update-Checker',
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+
+      if (response.status === 404) {
+        return {
+          hasUpdate: false,
+          currentVersion,
+          message: 'No published releases found yet.'
+        };
+      }
+
+      if (!response.ok) {
+        return {
+          hasUpdate: false,
+          currentVersion,
+          error: `GitHub API error (${response.status})`
+        };
+      }
+
+      const release = await response.json();
+      const latestTag = release.tag_name || '';
+      const cleanLatest = latestTag.replace(/^v/i, '').trim();
+
+      // Semver comparison
+      const parseSemver = (v) => v.replace(/^v/i, '').split('-')[0].split('.').map(n => parseInt(n, 10) || 0);
+      const [lMaj = 0, lMin = 0, lPatch = 0] = parseSemver(cleanLatest);
+      const [cMaj = 0, cMin = 0, cPatch = 0] = parseSemver(currentVersion);
+
+      let isNewer = false;
+      if (lMaj > cMaj) isNewer = true;
+      else if (lMaj === cMaj && lMin > cMin) isNewer = true;
+      else if (lMaj === cMaj && lMin === cMin && lPatch > cPatch) isNewer = true;
+
+      // Find DMG asset if attached to release
+      const dmgAsset = Array.isArray(release.assets)
+        ? release.assets.find(a => a.name && a.name.toLowerCase().endsWith('.dmg'))
+        : null;
+
+      const downloadUrl = dmgAsset?.browser_download_url || release.html_url || 'https://github.com/zakariarzack/aura-browser/releases';
+
+      return {
+        hasUpdate: isNewer,
+        currentVersion,
+        latestVersion: cleanLatest,
+        releaseName: release.name || latestTag,
+        releaseNotes: release.body || '',
+        releaseUrl: release.html_url,
+        downloadUrl,
+        publishedAt: release.published_at
+      };
+    } catch (err) {
+      return {
+        hasUpdate: false,
+        currentVersion,
+        error: err.message
+      };
+    }
+  });
+
   // IPC: Return list of all installed extensions to renderer
   ipcMain.handle('get-installed-extensions', async () => {
     const resultsMap = new Map();

@@ -98,7 +98,7 @@ import {
   CircleDot,
   Loader2
 } from 'lucide-react';
-import { Space, TabItem, CustomGroup } from './types';
+import { Space, TabItem, CustomGroup, AppUpdateInfo } from './types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChromeNewTabPage } from './components/ChromeNewTabPage';
 import { getBundledIcon } from './bundledIcons';
@@ -1340,6 +1340,53 @@ export function App() {
   const [showRecentlyClosedDrawer, setShowRecentlyClosedDrawer] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [tidyNotification, setTidyNotification] = useState<string | null>(null);
+
+  // In-App Auto-Update State (Option 1: GitHub Release Checker)
+  const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
+  const [isUpdateBannerDismissed, setIsUpdateBannerDismissed] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+
+  const checkForUpdates = useCallback(async (isManual = false) => {
+    setIsCheckingUpdate(true);
+    try {
+      if ((window as any).electronAPI?.invoke) {
+        const res: AppUpdateInfo = await (window as any).electronAPI.invoke('check-app-update');
+        setUpdateInfo(res);
+        if (res.hasUpdate) {
+          setIsUpdateBannerDismissed(false);
+          if (isManual) {
+            setIsUpdateModalOpen(true);
+          }
+        } else if (isManual) {
+          setTidyNotification(`Aura v${res.currentVersion} is currently the latest version.`);
+          setTimeout(() => setTidyNotification(null), 4000);
+        }
+      }
+    } catch (e) {
+      if (isManual) {
+        setTidyNotification('Could not check for updates right now.');
+        setTimeout(() => setTidyNotification(null), 4000);
+      }
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  }, []);
+
+  const handleDownloadUpdate = (url?: string) => {
+    const targetUrl = url || updateInfo?.downloadUrl || updateInfo?.releaseUrl;
+    if (targetUrl && (window as any).electronAPI?.invoke) {
+      (window as any).electronAPI.invoke('open-external-url', targetUrl);
+    }
+  };
+
+  // Check for updates 3 seconds after launch
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkForUpdates(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [checkForUpdates]);
 
   // Chrome Memory Saver State
   // Tracks tabs that recently woke up to display the Chrome-style Omnibox ring and savings chip
@@ -3908,6 +3955,42 @@ export function App() {
           </div>
         </div>
 
+        {/* Update Available Banner in Sidebar */}
+        {updateInfo?.hasUpdate && !isUpdateBannerDismissed && (
+          <div className="mx-2.5 mb-1.5 p-2 rounded-xl bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-pink-500/15 border border-indigo-400/30 backdrop-blur-md text-xs shadow-lg animate-in fade-in slide-in-from-bottom-2 shrink-0">
+            <div className="flex items-center justify-between gap-1 mb-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="flex h-2 w-2 relative shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                <span className="font-semibold text-white truncate text-[11px]">
+                  Aura v{updateInfo.latestVersion}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsUpdateBannerDismissed(true)}
+                className="text-zinc-400 hover:text-white p-0.5 rounded transition-colors cursor-pointer"
+                title="Dismiss banner"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+            <p className="text-[10px] text-zinc-300 mb-1.5 line-clamp-1">
+              New version ready to download
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsUpdateModalOpen(true)}
+                className="flex-1 py-1 px-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-[11px] text-center transition-all shadow active:scale-95 cursor-pointer flex items-center justify-center gap-1"
+              >
+                <Download className="w-3 h-3" />
+                <span>Update</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Bottom Bar: Recently Closed Tabs Button (Left), Centered Carousel Profile Dots, & History Manager Button (Right after Carousel) */}
         <div className="px-3 py-2 flex items-center justify-between">
             {/* Chrome-Style Recently Closed Tabs Button */}
@@ -5486,6 +5569,7 @@ export function App() {
           | { type: 'google'; text: string; query: string }
           | { type: 'chat'; text: string; query: string }
           | { type: 'suggestion'; text: string; query: string }
+          | { type: 'action'; text: string; action: () => void }
           | { type: 'tab'; tab: TabItem };
 
         const items: PaletteItem[] = [];
@@ -5494,7 +5578,15 @@ export function App() {
         if (cleanQuery) {
           items.push({ type: 'google', text: `${cleanQuery} — Google`, query: cleanQuery });
           items.push({ type: 'chat', text: `${cleanQuery} — Chat`, query: cleanQuery });
-          
+
+          if ('check for updates'.includes(cleanQuery.toLowerCase()) || 'update'.includes(cleanQuery.toLowerCase())) {
+            items.push({
+              type: 'action',
+              text: '✨ Check for Updates...',
+              action: () => checkForUpdates(true),
+            });
+          }
+
           // Add live search suggestions
           for (const sugg of liveSuggestions) {
             if (sugg.toLowerCase() !== cleanQuery.toLowerCase()) {
@@ -5511,6 +5603,8 @@ export function App() {
         const handleSelectItem = (item: PaletteItem) => {
           if (item.type === 'tab') {
             switchTab(item.tab.id);
+          } else if (item.type === 'action') {
+            item.action();
           } else {
             handleNavigate(item.query);
           }
@@ -5594,6 +5688,28 @@ export function App() {
                           </div>
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-zinc-400 font-mono shrink-0">
                             {space?.name || 'Space'}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    if (item.type === 'action') {
+                      return (
+                        <div
+                          key={`action-${idx}`}
+                          onClick={() => handleSelectItem(item)}
+                          className={`flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-indigo-600/30 text-white font-medium border border-indigo-500/40 shadow-sm'
+                              : 'hover:bg-white/5 text-zinc-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 truncate">
+                            <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                            <span className="text-xs text-white truncate">{item.text}</span>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-mono">
+                            Action
                           </span>
                         </div>
                       );
@@ -6494,6 +6610,58 @@ export function App() {
                       );
                     })}
                   </div>
+
+                  {/* App Version & Auto-Updates */}
+                  <div className="mt-5 pt-4 border-t border-white/5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-semibold text-white">Aura Browser Version</h4>
+                        <p className="text-[11px] text-zinc-400">
+                          Current installed version: v{updateInfo?.currentVersion || '1.0.0'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => checkForUpdates(true)}
+                        disabled={isCheckingUpdate}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm"
+                      >
+                        <RotateCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                        <span>{isCheckingUpdate ? 'Checking...' : 'Check for Updates'}</span>
+                      </button>
+                    </div>
+
+                    {updateInfo?.hasUpdate ? (
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-pink-500/15 border border-indigo-400/30 flex items-center justify-between shadow-md">
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex h-2.5 w-2.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                          </span>
+                          <div>
+                            <p className="text-xs font-semibold text-white">
+                              Aura v{updateInfo.latestVersion} is available!
+                            </p>
+                            <p className="text-[11px] text-zinc-300">New features and improvements ready</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setIsSettingsOpen(false);
+                            setIsUpdateModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium shadow-md transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>View & Download</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 text-zinc-400 text-[11px]">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>You are on the latest version of Aura Browser.</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -7070,6 +7238,87 @@ export function App() {
             </button>
           </div>
         </>
+      )}
+
+      {/* 11. IN-APP UPDATE MODAL */}
+      {isUpdateModalOpen && updateInfo && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150 select-none"
+          onClick={() => setIsUpdateModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl bg-[#1c232d]/95 border border-white/15 shadow-2xl p-6 text-zinc-200 flex flex-col gap-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-white">
+                    {updateInfo.hasUpdate ? 'Update Available' : 'Aura Browser'}
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    {updateInfo.hasUpdate
+                      ? `Version ${updateInfo.latestVersion} is ready to install (current: v${updateInfo.currentVersion})`
+                      : `Version ${updateInfo.currentVersion} is the latest version`}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsUpdateModalOpen(false)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {updateInfo.releaseNotes && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                  What's New in {updateInfo.releaseName || `v${updateInfo.latestVersion}`}
+                </span>
+                <div className="max-h-48 overflow-y-auto p-3 rounded-xl bg-black/30 border border-white/5 text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed font-sans select-text">
+                  {updateInfo.releaseNotes}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+              <button
+                onClick={() => setIsUpdateModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Later
+              </button>
+              {updateInfo.releaseUrl && (
+                <button
+                  onClick={() => {
+                    handleDownloadUpdate(updateInfo.releaseUrl);
+                    setIsUpdateModalOpen(false);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-300 hover:text-white bg-white/10 hover:bg-white/15 transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Release Notes</span>
+                </button>
+              )}
+              {updateInfo.hasUpdate && (
+                <button
+                  onClick={() => {
+                    handleDownloadUpdate(updateInfo.downloadUrl);
+                    setIsUpdateModalOpen(false);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 shadow-lg shadow-indigo-500/25 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download DMG</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

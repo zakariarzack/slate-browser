@@ -37,3 +37,16 @@ export interface CustomGroup {
   createdAt: number;
 }
 
+export interface AppUpdateInfo {
+  hasUpdate: boolean;
+  currentVersion: string;
+  latestVersion?: string;
+  releaseName?: string;
+  releaseNotes?: string;
+  releaseUrl?: string;
+  downloadUrl?: string;
+  publishedAt?: string;
+  message?: string;
+  error?: string;
+}
+
